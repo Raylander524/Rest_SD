@@ -20,6 +20,15 @@ veiculos_local = []
 # URL base da API externa (FIPE ou similar)
 URL_API_EXTERNA = "https://parallelum.com.br/fipe/api/v1"   # você substitui aqui
 
+def adicionar_veiculo_local(dados):
+    for veiculo in veiculos_local:
+        if veiculo["codigo_fipe"] == dados["codigo_fipe"]:
+            return # já existe
+    dados["id_local"] = len(veiculos_local) + 1
+    dados["created_at"] = datetime.now().isoformat()
+    dados["updated_at"] = datetime.now().isoformat()
+    veiculos_local.append(dados)
+
 
 # -------------------------------
 # GET → Buscar da API externa
@@ -42,7 +51,7 @@ def buscar_externo_modelo(marca, modelo):
 @app.get("/externo/<marca>/<modelo>/<ano>")
 def buscar_externo_ano(marca, modelo, ano):
     resposta = requests.get(f"{URL_API_EXTERNA}/carros/marcas/{marca}/modelos/{modelo}/anos/{ano}")
-    requests.post(f"http://127.0.0.1:5000/veiculos", json=resposta.json())
+    adicionar_veiculo_local(resposta.json())
     return respond(resposta.json())
 
 # -------------------------------
@@ -57,6 +66,9 @@ def listar_veiculos():
 @app.post("/veiculos")
 def criar_veiculo():
     dados = request.json
+    for v in veiculos_local:
+        if v["codigo_fipe"] == dados["codigo_fipe"]:
+            return jsonify({"erro": "Veículo já existe"}), 400
     dados["id_local"] = len(veiculos_local) + 1
     dados["created_at"] = datetime.now().isoformat()
     dados["updated_at"] = datetime.now().isoformat()
