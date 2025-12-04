@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Calculadora REST</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 400px;
+            margin: 40px auto;
+            background: #f7f7f7;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        input, select, button {
+            width: 100%;
+            margin: 10px 0;
+            height: 40px;
+            font-size: 16px;
+        }
+        #resultado {
+            margin-top: 20px;
+            font-size: 18px;
+            background: white;
+            padding: 10px;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Cliente REST - Calculadora</h2>
+
+    <input type="number" id="value1" placeholder="Primeiro valor">
+    <input type="number" id="value2" placeholder="Segundo valor">
+
+    <select id="operacao">
+        <option value="soma">Soma</option>
+        <option value="subtracao">Subtração</option>
+        <option value="multiplicacao">Multiplicação</option>
+        <option value="divisao">Divisão</option>
+    </select>
+
+    <button onclick="calcular()">Calcular</button>
+
+    <div id="resultado"></div>
+
+    <script>
+        const BASE = "https://calculadora-fxpc.onrender.com";
+
+        async function calcular() {
+            const v1 = document.getElementById("value1").value;
+            const v2 = document.getElementById("value2").value;
+            const op = document.getElementById("operacao").value;
+
+            if (v1 === "" || v2 === "") {
+                document.getElementById("resultado").innerHTML = "Preencha os valores!";
+                return;
+            }
+
+            const url = `${BASE}/operation/${op}/${v1}/${v2}`;
+
+            const resposta = await fetch(url, {
+                method: "POST"
+            });
+
+            const data = await resposta.json();
+
+            if (data.error) {
+                document.getElementById("resultado").innerHTML = "Erro: operação inválida";
+            } else {
+                document.getElementById("resultado").innerHTML = `Resultado: <b>${data.result}</b>`;
+            }
+        }
+    </script>
+
+</body>
+</html>
