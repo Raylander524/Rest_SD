@@ -35,10 +35,7 @@
     <input type="number" id="value2" placeholder="Segundo valor">
 
     <select id="operacao">
-        <option value="soma">Soma</option>
-        <option value="subtracao">Subtração</option>
-        <option value="multiplicacao">Multiplicação</option>
-        <option value="divisao">Divisão</option>
+        <option value="">Carregando operações...</option>
     </select>
 
     <button onclick="calcular()">Calcular</button>
@@ -47,6 +44,33 @@
 
     <script>
         const BASE = "https://calculadora-fxpc.onrender.com";
+
+        // Carregar operações ao iniciar a página
+        async function carregarOperacoes() {
+            try {
+                const resposta = await fetch(`${BASE}/operations`);
+                const data = await resposta.json();
+                
+                const selectOperacao = document.getElementById("operacao");
+                selectOperacao.innerHTML = ""; // Limpar opções
+                
+                // Adicionar cada operação como opção no select
+                data.operations.forEach(op => {
+                    const option = document.createElement("option");
+                    // Extrair o nome da operação do path (ex: /operation/soma/... -> soma)
+                    const operacaoNome = op.path.split('/')[2];
+                    option.value = operacaoNome;
+                    option.textContent = op.name;
+                    selectOperacao.appendChild(option);
+                });
+            } catch (erro) {
+                console.error("Erro ao carregar operações:", erro);
+                document.getElementById("operacao").innerHTML = '<option value="">Erro ao carregar operações</option>';
+            }
+        }
+
+        // Carregar operações quando a página carregar
+        window.addEventListener('DOMContentLoaded', carregarOperacoes);
 
         async function calcular() {
             const v1 = document.getElementById("value1").value;
