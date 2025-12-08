@@ -1,0 +1,380 @@
+openapi: 3.0.3
+info:
+  title: API de Veículos (FIPE proxy + CRUD local)
+  version: "1.0.0"
+  description: |
+    API que expõe endpoints para consulta a uma API externa (FIPE-like) e
+    um CRUD local de veículos com votação e comparação. Suporta content
+    negotiation via query `?format=` ou header `Accept` (json, xml, protobuf).
+servers:
+  - url: http://localhost:5000
+tags:
+  - name: Externo
+    description: Endpoints que consultam a API externa (FIPE)
+  - name: Veiculos
+    description: CRUD e operações locais sobre veículos
+  - name: Comparar
+    description: Endpoints para comparar veículos
+paths:
+  /externo:
+    get:
+      tags: [Externo]
+      summary: Lista marcas (consulta externa)
+      responses:
+        '200':
+          description: Lista de marcas (array)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+            application/xml:
+              schema:
+                type: string
+            application/x-protobuf:
+              schema:
+                type: string
+                format: binary
+  /externo/{marca}:
+    get:
+      tags: [Externo]
+      summary: Modelos por marca (consulta externa)
+      parameters:
+        - name: marca
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Modelos da marca
+          content:
+            application/json:
+              schema:
+                type: object
+            application/xml:
+              schema:
+                type: string
+            application/x-protobuf:
+              schema:
+                type: string
+                format: binary
+  /externo/{marca}/{modelo}:
+    get:
+      tags: [Externo]
+      summary: Anos por modelo e marca (consulta externa)
+      parameters:
+        - name: marca
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: modelo
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lista de anos para o modelo
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+            application/xml:
+              schema:
+                type: string
+            application/x-protobuf:
+              schema:
+                type: string
+                format: binary
+  /externo/{marca}/{modelo}/{ano}:
+    get:
+      tags: [Externo]
+      summary: Detalhes do veículo por ano/modelo/marca (consulta externa)
+      parameters:
+        - name: marca
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: modelo
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: ano
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Detalhes do veículo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vehicle'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Vehicle'
+            application/x-protobuf:
+              schema:
+                type: string
+                format: binary
+
+  /veiculos:
+    get:
+      tags: [Veiculos]
+      summary: Lista veículos locais
+      responses:
+        '200':
+          description: Lista de veículos locais
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Vehicle'
+            application/xml:
+              schema:
+                type: string
+            application/x-protobuf:
+              schema:
+                type: string
+                format: binary
+    post:
+      tags: [Veiculos]
+      summary: Cria um veículo local
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VehicleCreate'
+      responses:
+        '201':
+          description: Veículo criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vehicle'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Vehicle'
+
+  /veiculos/{id_local}:
+    parameters:
+      - name: id_local
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      tags: [Veiculos]
+      summary: Obtém veículo local por id
+      responses:
+        '200':
+          description: Veículo encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vehicle'
+        '404':
+          description: Não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags: [Veiculos]
+      summary: Atualiza veículo local por id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VehicleUpdate'
+      responses:
+        '200':
+          description: Veículo atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vehicle'
+        '404':
+          description: Não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags: [Veiculos]
+      summary: Remove veículo local por id
+      responses:
+        '204':
+          description: Removido com sucesso (sem conteúdo)
+        '404':
+          description: Não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /veiculos/{id_local}/votar:
+    post:
+      tags: [Veiculos]
+      summary: Vota em veículo local
+      parameters:
+        - name: id_local
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Voto registrado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  mensagem:
+                    type: string
+                  votos:
+                    type: integer
+        '404':
+          description: Não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /veiculos/ranking:
+    get:
+      tags: [Veiculos]
+      summary: Ranking de veículos por votos
+      responses:
+        '200':
+          description: Lista ordenada por votos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Vehicle'
+
+  /comparar:
+    post:
+      tags: [Comparar]
+      summary: Compara veículos por ids locais
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompareRequest'
+      responses:
+        '200':
+          description: Resultado da comparação
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  comparacao:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Vehicle'
+        '400':
+          description: Requisição inválida (menos de 2 ids)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    Vehicle:
+      type: object
+      properties:
+        id_local:
+          type: integer
+          description: Identificador local gerado pelo servidor
+        CodigoFipe:
+          type: string
+          description: Código FIPE do veículo
+        Marca:
+          type: string
+        Modelo:
+          type: string
+        AnoModelo:
+          type: integer
+        Valor:
+          type: string
+        votos:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - CodigoFipe
+
+    VehicleCreate:
+      type: object
+      properties:
+        CodigoFipe:
+          type: string
+        Marca:
+          type: string
+        Modelo:
+          type: string
+        AnoModelo:
+          type: integer
+        Valor:
+          type: string
+      required:
+        - CodigoFipe
+
+    VehicleUpdate:
+      type: object
+      properties:
+        Marca:
+          type: string
+        Modelo:
+          type: string
+        AnoModelo:
+          type: integer
+        Valor:
+          type: string
+
+    CompareRequest:
+      type: object
+      properties:
+        ids:
+          type: array
+          items:
+            type: integer
+      required:
+        - ids
+
+    Error:
+      type: object
+      properties:
+        erro:
+          type: string
+
+security: []
+
+x-notes: |
+  - A API original implementa content negotiation via `?format=` ou header `Accept`.
+  - Para `application/x-protobuf` a resposta é binária (google.protobuf.Struct).
+  - Alguns campos do objeto Vehicle refletem o contrato FIPE mas são opcionais.
