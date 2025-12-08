@@ -3,6 +3,7 @@ import requests
 from datetime import datetime
 import json
 from xml.etree.ElementTree import Element, tostring, SubElement
+from flask_cors import CORS
 
 # Protobuf helpers (use google.protobuf.struct_pb2 to serialize arbitrary JSON)
 try:
@@ -13,6 +14,8 @@ except Exception:
     HAS_PROTOBUF = False
 
 app = Flask(__name__)
+CORS(app)
+
 
 # Armazenamento local (CRUD)
 veiculos_local = []
